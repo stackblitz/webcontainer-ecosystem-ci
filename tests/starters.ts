@@ -1,0 +1,19 @@
+import { defineTest } from "../src/test";
+
+export default defineTest({
+  repo: "AriPerkkio/starters",
+  branch: "test/webcontainer-tests",
+
+  // TODO:
+  // repo: "stackblitz/starters",
+  // branch: "main",
+
+  test: [
+    "test -- --project chromium",
+
+    // Firefox is flaky, run it without parallelism
+    "test -- --project firefox --no-file-parallelism",
+  ],
+  beforeTest:
+    "npx playwright install chromium firefox --with-deps --only-shell",
+});

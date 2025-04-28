@@ -1,0 +1,48 @@
+# integration tests for webcontainer ecosystem projects - scheduled or manual run for all suites
+name: webcontainer-ecosystem-ci
+
+env:
+  # 7 GiB by default on GitHub, setting to 6 GiB
+  # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
+  NODE_OPTIONS: --max-old-space-size=6144
+
+on:
+  schedule:
+    - cron: "0 5 * * 1,3,5" # monday,wednesday,friday 5AM
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "@webcontainer/api version to use"
+        required: true
+        type: string
+        default: "latest"
+
+jobs:
+  test-ecosystem:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        suite:
+          - starters
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+        id: setup-node
+        continue-on-error: true
+
+      - run: corepack enable
+
+      - run: pnpm --version
+
+      - run: pnpm i --frozen-lockfile
+
+      - run: >-
+          pnpm tsx ecosystem-ci.ts
+          --release ${{ inputs.version || github.event.client_payload.version }}
+          ${{ matrix.suite }}
+        id: ecosystem-ci-run
