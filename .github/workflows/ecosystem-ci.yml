@@ -42,7 +42,7 @@ jobs:
       - run: pnpm i --frozen-lockfile
 
       - run: >-
-          pnpm tsx ecosystem-ci.ts
+          pnpm run test
           --release ${{ inputs.version || github.event.client_payload.version }}
           ${{ matrix.suite }}
         id: ecosystem-ci-run
