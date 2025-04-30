@@ -1,0 +1,30 @@
+{
+  "name": "webcontainers-ecosystem-ci",
+  "version": "0.0.1",
+  "description": "WebContainers Ecosystem CI",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@10.4.1",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stackblitz/webcontainers-ecosystem-ci.git"
+  },
+  "bugs": {
+    "url": "https://github.com/stackblitz/webcontainers-ecosystem-ci/issues"
+  },
+  "homepage": "https://github.com/stackblitz/webcontainers-ecosystem-ci#readme",
+  "scripts": {
+    "tsx": "tsx",
+    "test": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@actions/core": "^1.11.1",
+    "@antfu/ni": "^24.3.0",
+    "cac": "^6.7.14",
+    "tinyexec": "^1.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "tsx": "^4.19.3"
+  }
+}
