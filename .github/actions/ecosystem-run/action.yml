@@ -1,0 +1,35 @@
+name: Ecosystem Run
+description: Run ecosystem CI with specific test suite
+inputs:
+  version:
+    required: true
+    description: "@webcontainer/api version to use"
+  test-suite:
+    required: true
+    description: Test suite to run
+
+runs:
+  using: composite
+
+  steps:
+    - uses: actions/setup-node@v4
+      id: setup-node
+      continue-on-error: true
+      with:
+        node-version: 20
+
+    - run: corepack enable
+      shell: bash
+
+    - run: pnpm --version
+      shell: bash
+
+    - run: pnpm i --frozen-lockfile
+      shell: bash
+
+    - run: >-
+        pnpm run test
+        --release ${{ inputs.version }}
+        ${{ inputs.test-suite }}
+      id: ecosystem-ci-run
+      shell: bash

@@ -16,35 +16,46 @@ on:
         required: true
         type: string
         default: "latest"
+      suite:
+        description: "testsuite to run"
+        type: choice
+        default: "all"
+        options:
+          - all
+          - starters
+          - vitest-in-webcontainer
+          - webcontainer-test
 
 jobs:
   test-ecosystem:
+    if: inputs.suite == 'all'
     timeout-minutes: 60
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         suite:
           - starters
           - vitest-in-webcontainer
           - webcontainer-test
-      fail-fast: false
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Run ${{ matrix.suite }}
+        uses: ./.github/actions/ecosystem-run
         with:
-          node-version: 20
-        id: setup-node
-        continue-on-error: true
+          test-suite: ${{ matrix.suite }}
+          version: ${{ inputs.version || github.event.client_payload.version }}
 
-      - run: corepack enable
+  test-ecosystem-selected:
+    if: inputs.suite != 'all'
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-      - run: pnpm --version
-
-      - run: pnpm i --frozen-lockfile
-
-      - run: >-
-          pnpm run test
-          --release ${{ inputs.version || github.event.client_payload.version }}
-          ${{ matrix.suite }}
-        id: ecosystem-ci-run
+      - name: Run ${{ inputs.suite }}
+        uses: ./.github/actions/ecosystem-run
+        with:
+          test-suite: ${{ inputs.suite }}
+          version: ${{ inputs.version || github.event.client_payload.version }}
