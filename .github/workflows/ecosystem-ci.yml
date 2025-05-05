@@ -16,17 +16,44 @@ on:
         required: true
         type: string
         default: "latest"
-
-jobs:
-  test-ecosystem:
-    timeout-minutes: 60
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        suite:
+      suite:
+        description: "testsuite to run"
+        type: choice
+        default: "all"
+        options:
+          - all
           - starters
           - vitest-in-webcontainer
           - webcontainer-test
+
+jobs:
+  resolve_suites:
+    runs-on: ubuntu-latest
+    outputs:
+      suites: ${{ steps.set-suites.outputs.suites }}
+    steps:
+      - id: set-suites
+        run: >
+          if [[ "${{ inputs.suite }}" == "all" ]]
+          then
+            echo 'suites=[${{ env.options }}]' >> $GITHUB_OUTPUT
+          else
+            echo 'suites=["${{ inputs.suite }}"]' >> $GITHUB_OUTPUT
+          fi
+        env:
+          options:
+            - starters
+            - vitest-in-webcontainer
+            - webcontainer-test
+
+  test-ecosystem:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    needs:
+      - resolve_suites
+    strategy:
+      matrix:
+        suite: ${{ fromJson(needs.resolve_suites.outputs.suites) }}
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
