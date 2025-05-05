@@ -7,7 +7,7 @@ export default defineTest({
   test: [
     "test -- --project chromium",
 
-    // Firefox is flaky, run it without parallelism
+    // firefox is flaky, run it without parallelism
     "test -- --project firefox --no-file-parallelism",
   ],
   beforeTest:

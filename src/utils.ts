@@ -1,11 +1,11 @@
-import { join, resolve } from "node:path";
-import actionsCore from "@actions/core";
-import { x } from "tinyexec";
-import { detect, AGENTS, getCommand } from "@antfu/ni";
-
-import { Overrides, RepoOptions, RunOptions, Task } from "./types";
 import { existsSync, lstatSync, rmSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { join, resolve } from "node:path";
+import actionsCore from "@actions/core";
+import { detect, AGENTS, getCommand } from "@antfu/ni";
+import { x } from "tinyexec";
+
+import { Overrides, RepoOptions, RunOptions, Task } from "./types";
 
 const isGitHubActions = !!process.env.GITHUB_ACTIONS;
 
@@ -31,10 +31,10 @@ export async function runInRepo(options: RunOptions & RepoOptions) {
 
   const dir = resolve(
     options.workspace,
-    options.dir || repo.substring(repo.lastIndexOf("/") + 1)
+    options.dir || repo.substring(repo.lastIndexOf("/") + 1),
   );
 
-  let overrides = options.overrides || {};
+  const overrides = options.overrides || {};
 
   if (options.release) {
     overrides["@webcontainer/api"] = options.release;
@@ -44,18 +44,22 @@ export async function runInRepo(options: RunOptions & RepoOptions) {
 
   if (options.agent == null) {
     const detectedAgent = await detect({ cwd: dir, autoInstall: false });
+
     if (detectedAgent == null) {
       throw new Error(`Failed to detect packagemanager in ${dir}`);
     }
+
     options.agent = detectedAgent;
   }
+
   if (!AGENTS.includes(options.agent)) {
     throw new Error(
       `Invalid agent ${options.agent}. Allowed values: ${Object.values(
-        AGENTS
-      ).join(", ")}`
+        AGENTS,
+      ).join(", ")}`,
     );
   }
+
   const agent = options.agent;
   const beforeInstallCommand = toCommand(beforeInstall, agent);
   const beforeBuildCommand = toCommand(beforeBuild, agent);
@@ -84,23 +88,31 @@ async function setupRepo(options: RepoOptions) {
   if (options.branch == null) {
     options.branch = "main";
   }
+
   if (options.shallow == null) {
     options.shallow = true;
   }
 
-  let { repo, commit, branch, tag, dir, shallow } = options;
+  const { dir, shallow, tag, branch, commit } = options;
+
+  let { repo } = options;
+
   if (!dir) {
     throw new Error("setupRepo must be called with options.dir");
   }
+
   if (!repo.includes(":")) {
     repo = `https://github.com/${repo}.git`;
   }
 
   let needClone = true;
+
   if (existsSync(dir)) {
     const _cwd = cwd;
     cd(dir);
+
     let currentClonedRepo: string | undefined;
+
     try {
       currentClonedRepo = await $`git ls-remote --get-url`;
     } catch {
@@ -145,7 +157,7 @@ export async function $(literals: TemplateStringsArray, ...values: any[]) {
   const fullCmd = literals.reduce(
     (result, current, i) =>
       result + current + (values?.[i] != null ? `${values[i]}` : ""),
-    ""
+    "",
   );
 
   const [cmd, ...options] = fullCmd.split(" ");
@@ -164,9 +176,13 @@ export async function $(literals: TemplateStringsArray, ...values: any[]) {
     },
   });
 
-  proc.process?.stdin && process.stdin.pipe(proc.process.stdin);
+  if (proc.process?.stdin) {
+    process.stdin.pipe(proc.process.stdin);
+  }
+
   proc.process?.stdout?.pipe(process.stdout);
   proc.process?.stderr?.pipe(process.stderr);
+
   const result = await proc;
 
   if (isGitHubActions) {
@@ -185,7 +201,7 @@ export async function setupEnvironment() {
     ...process.env,
     CI: "true",
     NODE_OPTIONS: "--max-old-space-size=6144", // GITHUB CI has 7GB max, stay below
-    ECOSYSTEM_CI: "true", // flag for tests, can be used to conditionally skip irrelevant tests.
+    ECOSYSTEM_CI: "true", // flag for tests, can be used to conditionally skip irrelevant tests
   };
 
   if (!existsSync(workspace)) {
@@ -197,7 +213,7 @@ export async function setupEnvironment() {
 
 function toCommand(
   task: Task | Task[] | void,
-  agent: NonNullable<RunOptions["agent"]>
+  agent: NonNullable<RunOptions["agent"]>,
 ): ((scripts: any) => Promise<any>) | void {
   return async (scripts: any) => {
     const tasks = Array.isArray(task) ? task : [task];
@@ -214,7 +230,7 @@ function toCommand(
           const runTaskWithAgent = getCommand(agent, "run", [task]);
 
           await $`${runTaskWithAgent.command} ${runTaskWithAgent.args.join(
-            " "
+            " ",
           )}`;
         } else {
           await $`${task}`;
@@ -223,7 +239,7 @@ function toCommand(
         await task();
       } else {
         throw new Error(
-          `invalid task, expected string or function but got ${typeof task}: ${task}`
+          `invalid task, expected string or function but got ${typeof task}: ${task}`,
         );
       }
     }
@@ -234,7 +250,7 @@ export async function applyPackageOverrides(
   dir: string,
   pkg: any,
   overrides: Overrides = {},
-  options: RunOptions & RepoOptions
+  options: RunOptions & RepoOptions,
 ) {
   const useFileProtocol = (v: string) =>
     isLocalOverride(v) ? `file:${resolve(v)}` : v;
@@ -243,17 +259,22 @@ export async function applyPackageOverrides(
   overrides = Object.fromEntries(
     Object.entries(overrides)
       .filter(([_, value]) => typeof value === "string")
-      .map(([key, value]) => [key, useFileProtocol(value as string)])
+      .map(([key, value]) => [key, useFileProtocol(value as string)]),
   );
   await $`git clean -fdxq`; // remove current install
 
   const agent = await detect({ cwd: dir, autoInstall: false });
+
   if (!agent) {
     throw new Error(`failed to detect packageManager in ${dir}`);
   }
-  // Remove version from agent string:
-  // yarn@berry => yarn
-  // pnpm@6, pnpm@7 => pnpm
+
+  /**
+   * Remove version from agent string:
+   * yarn@berry => yarn
+   * pnpm@6, pnpm@7 => pnpm
+   * .
+   */
   const pm = agent?.split("@")[0];
 
   await overridePackageManagerVersion(pkg, pm, options.agentVersion);
@@ -280,11 +301,13 @@ export async function applyPackageOverrides(
       ...pkg.overrides,
       ...overrides,
     };
+
     // npm does not allow overriding direct dependencies, force it by updating the blocks themselves
     for (const [name, version] of Object.entries(overrides)) {
       if (pkg.dependencies?.[name]) {
         pkg.dependencies[name] = version;
       }
+
       if (pkg.devDependencies?.[name]) {
         pkg.devDependencies[name] = version;
       }
@@ -313,18 +336,20 @@ function isLocalOverride(v: string): boolean {
     // not path-like (either a version number or a package name)
     return false;
   }
+
   try {
     return !!lstatSync(v)?.isDirectory();
-  } catch (e) {
-    if (e.code !== "ENOENT") {
-      throw e;
+  } catch (error) {
+    if (error.code !== "ENOENT") {
+      throw error;
     }
+
     return false;
   }
 }
 
 /**
- * utility to override packageManager version
+ * Utility to override packageManager version.
  *
  * @param pkg parsed package.json
  * @param pm package manager to override eg. `pnpm`
@@ -333,25 +358,29 @@ function isLocalOverride(v: string): boolean {
 async function overridePackageManagerVersion(
   pkg: { [key: string]: any },
   pm: string,
-  agentVersion?: string
+  agentVersion?: string,
 ): Promise<boolean> {
-  let overrideWithVersion: string | undefined = agentVersion;
+  const overrideWithVersion: string | undefined = agentVersion;
 
   if (overrideWithVersion) {
     console.warn(
-      `Changing pkg.packageManager and pkg.engines.${pm} to enforce use of ${pm}@${overrideWithVersion}`
+      `Changing pkg.packageManager and pkg.engines.${pm} to enforce use of ${pm}@${overrideWithVersion}`,
     );
 
     // corepack reads this and uses pnpm @ newVersion then
     pkg.packageManager = `${pm}@${overrideWithVersion}`;
+
     if (!pkg.engines) {
       pkg.engines = {};
     }
+
     pkg.engines[pm] = overrideWithVersion;
 
     if (pkg.devDependencies?.[pm]) {
-      // if for some reason the pm is in devDependencies, that would be a local version that'd be preferred over our forced global
-      // so ensure it here too.
+      /**
+       * If for some reason the pm is in devDependencies, that would be a local version that'd be preferred over our forced global
+       * so ensure it here too.
+       */
       pkg.devDependencies[pm] = overrideWithVersion;
     }
 
