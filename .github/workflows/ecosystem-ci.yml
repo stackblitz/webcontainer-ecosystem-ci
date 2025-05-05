@@ -25,6 +25,7 @@ jobs:
       matrix:
         suite:
           - starters
+          - vitest-in-webcontainer
           - webcontainer-test
       fail-fast: false
     steps:
