@@ -1,12 +1,8 @@
 import { defineTest } from "../src/test";
 
 export default defineTest({
-  repo: "AriPerkkio/starters",
-  branch: "test/webcontainer-tests",
-
-  // TODO:
-  // repo: "stackblitz/starters",
-  // branch: "main",
+  repo: "stackblitz/starters",
+  branch: "main",
 
   test: [
     "test -- --project chromium",
