@@ -10,7 +10,7 @@ cli
   .command("[...suites]", "run selected suites")
   .option(
     "--release <version>",
-    "@webcontainer/api release to use from npm registry"
+    "@webcontainer/api release to use from npm registry",
   )
   .action(async (suites: string[], options: CommandOptions) => {
     await assertSuites(suites);
