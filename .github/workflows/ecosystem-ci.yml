@@ -27,51 +27,35 @@ on:
           - webcontainer-test
 
 jobs:
-  resolve_suites:
-    runs-on: ubuntu-latest
-    outputs:
-      suites: ${{ steps.set-suites.outputs.suites }}
-    steps:
-      - id: set-suites
-        run: >
-          if [[ "${{ inputs.suite }}" == "all" ]]
-          then
-            echo 'suites=[${{ env.options }}]' >> $GITHUB_OUTPUT
-          else
-            echo 'suites=["${{ inputs.suite }}"]' >> $GITHUB_OUTPUT
-          fi
-        env:
-          options:
-            - starters
-            - vitest-in-webcontainer
-            - webcontainer-test
-
   test-ecosystem:
+    if: inputs.suite == 'all'
     timeout-minutes: 60
     runs-on: ubuntu-latest
-    needs:
-      - resolve_suites
     strategy:
-      matrix:
-        suite: ${{ fromJson(needs.resolve_suites.outputs.suites) }}
       fail-fast: false
+      matrix:
+        suite:
+          - starters
+          - vitest-in-webcontainer
+          - webcontainer-test
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Run ${{ matrix.suite }}
+        uses: ./.github/actions/ecosystem-run
         with:
-          node-version: 20
-        id: setup-node
-        continue-on-error: true
+          test-suite: ${{ matrix.suite }}
+          version: ${{ inputs.version || github.event.client_payload.version }}
 
-      - run: corepack enable
+  test-ecosystem-selected:
+    if: inputs.suite != 'all'
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-      - run: pnpm --version
-
-      - run: pnpm i --frozen-lockfile
-
-      - run: >-
-          pnpm run test
-          --release ${{ inputs.version || github.event.client_payload.version }}
-          ${{ matrix.suite }}
-        id: ecosystem-ci-run
+      - name: Run ${{ inputs.suite }}
+        uses: ./.github/actions/ecosystem-run
+        with:
+          test-suite: ${{ inputs.suite }}
+          version: ${{ inputs.version || github.event.client_payload.version }}
