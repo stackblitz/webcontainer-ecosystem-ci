@@ -8,7 +8,7 @@ env:
 
 on:
   schedule:
-    - cron: "*/15 * * * *" # every 15 minutes
+    - cron: "0 5 * * 1,3,5" # monday,wednesday,friday 5AM
   workflow_dispatch:
     inputs:
       version:
