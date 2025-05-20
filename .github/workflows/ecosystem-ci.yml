@@ -50,7 +50,7 @@ jobs:
           version: ${{ inputs.version || github.event.client_payload.version || 'latest' }}
 
   test-ecosystem-selected:
-    if: inputs.suite != 'all'
+    if: inputs.suite != 'all' && github.event_name == 'workflow_dispatch'
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
