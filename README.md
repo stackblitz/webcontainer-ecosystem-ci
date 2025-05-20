@@ -1,3 +1,5 @@
+[![webcontainer-ecosystem-ci](https://github.com/stackblitz/webcontainer-ecosystem-ci/actions/workflows/ecosystem-ci.yml/badge.svg?event=schedule)](https://github.com/stackblitz/webcontainer-ecosystem-ci/actions/workflows/ecosystem-ci.yml?query=event%3Aschedule)
+
 # webcontainer-ecosystem-ci
 
 This repository is used to run tests for WebContainer ecosystem projects

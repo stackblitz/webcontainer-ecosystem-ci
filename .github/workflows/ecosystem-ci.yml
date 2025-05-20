@@ -29,7 +29,7 @@ on:
 
 jobs:
   test-ecosystem:
-    if: inputs.suite == 'all'
+    if: inputs.suite == 'all' || github.event_name == 'schedule'
     timeout-minutes: 60
     runs-on: ubuntu-latest
     strategy:
@@ -47,7 +47,7 @@ jobs:
         uses: ./.github/actions/ecosystem-run
         with:
           test-suite: ${{ matrix.suite }}
-          version: ${{ inputs.version || github.event.client_payload.version }}
+          version: ${{ inputs.version || github.event.client_payload.version || 'latest' }}
 
   test-ecosystem-selected:
     if: inputs.suite != 'all'
