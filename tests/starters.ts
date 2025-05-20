@@ -3,7 +3,6 @@ import { defineTest } from "../src/test";
 export default defineTest({
   repo: "stackblitz/starters",
   branch: "main",
-
   test: [
     "test -- --project chromium",
 

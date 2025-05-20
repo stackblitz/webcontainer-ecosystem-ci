@@ -23,6 +23,7 @@ on:
         options:
           - all
           - starters
+          - tutorialkit
           - vitest-in-webcontainer
           - webcontainer-test
 
@@ -36,6 +37,7 @@ jobs:
       matrix:
         suite:
           - starters
+          - tutorialkit
           - vitest-in-webcontainer
           - webcontainer-test
     steps:
